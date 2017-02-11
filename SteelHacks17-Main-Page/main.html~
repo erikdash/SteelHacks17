@@ -57,8 +57,8 @@
             <h1 class="cover-heading">Guy That Runs and Shoots.</h1>
             <p class="lead">Shoot past the first character. Avoid Obstacles </p>
             <p class="lead">
-              <a href="game.html" class="btn btn-lg btn-default">Play</a>
-			<IMG STYLE="position:absolute; TOP:100px; LEFT:400px; WIDTH:100px; HEIGHT:100px" SRC="Sprites.png">
+              <a href="game2.html" target="_blank" class="btn btn-lg btn-default">Play</a>
+			<IMG STYLE="position:absolute; TOP:100px; LEFT:400px; WIDTH:801px; HEIGHT:589px" SRC="Sprites.png">
             </p>
           </div>
 

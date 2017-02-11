@@ -11,14 +11,13 @@ canvas {
 </head>
 <body onload="startGame()">
 <script>
-
 var myGamePiece;
 var bullets;
 
 function startGame() 
 {
     myGamePiece = new player(40, 46, "standR.png", 10, 120);
-	//bullets = new bulletHandler();
+	bullets = new bulletHandler();
     myGameArea.start();
 }
 
@@ -41,7 +40,11 @@ var myGameArea =
 			
         window.addEventListener('keyup', function (e) 
 		{
-            myGameArea.keys[e.keyCode] = (e.type == "keydown");            
+			if(e.keyCode == 32)
+				myGamePiece.pressedShoot = false;
+			
+			
+			myGameArea.keys[e.keyCode] = (e.type == "keydown");            
         })
     }, 
 
@@ -96,6 +99,7 @@ function player(width, height, startImage, x, y)
     this.currentTime = this.timeReference.getTime();
 	this.animationSpeed = 70;
 	this.right = true;
+	this.pressedShoot = false;
 	
 	this.update = function() 
 	{
@@ -225,6 +229,16 @@ function move()
 			myGamePiece.speedY = -12;
 		}
 	}
+	
+	if (myGameArea.keys && myGameArea.keys[32] && myGamePiece.pressedShoot == false)
+	{
+		myGamePiece.pressedShoot = true;
+			
+		if(myGamePiece.right)
+			bullets.addBullet(1);
+		else
+			bullets.addBullet(-1);
+	}
 }
 
 function clearmove() 
@@ -233,64 +247,76 @@ function clearmove()
 }
 
 //----------------------------------------------
-/*
+
 function bulletHandler()
 {
-	this.array = new Array(3);
 	this.bulletLimit = 3;
+	this.array = new Array(this.bulletLimit);
 	this.currentBulletCount = 0;
-	this.bulletSpeed = 1;
-	
+	this.bulletSpeed = 5;
+
 	this.addBullet = function(direction)
 	{
+		var newSpotAdded = false;
+		
 		if(this.currentBulletCount < 3)
-		{
-			for(int x = 0; x < this.bulletLimit; x++)
+		{		
+			for(x = 0; x < this.bulletLimit; x++)
 			{
-				if(typeof this.array[x] !== 'undefined')
-					this.array[x] = new bulletObject(myGamePiece.x, myGamePiece.y, x, "bullet.png", direction);
+				if(this.array[x] == null && !newSpotAdded)
+				{
+					if(myGamePiece.right)
+						this.array[x] = new bulletObject(myGamePiece.x+38, myGamePiece.y+16, x, "bullet.png", direction);
+					else
+						this.array[x] = new bulletObject(myGamePiece.x, myGamePiece.y+16, x, "bullet.png", direction);
+
+					this.currentBulletCount++;
+					newSpotAdded = true;
+				}
 			}
 			
-			this.currentBulletCount++;
 		}
 	}
-
+	
+	
 	this.removeBullet = function(id)
 	{
 		if(this.currentBulletCount > 0)
 		{
-			typeof array[x] = 'undefined';
+			this.array[id] = null;
 			
 			this.currentBulletCount--;
 		}
 	}
 	
-	this.update() = function()
+	this.update = function()	
 	{
 		if(this.currentBulletCount > 0)
 		{
-			for(int x = 0; x < this.bulletLimit; x++)
+			for(x = 0; x < this.bulletLimit; x++)
 			{
-				if(typeof this.array[x] !== 'undefined')
+				if(this.array[x] != null)
 				{
-					this.array[x].x += this.array[x].direction;
-				
-					if(this.array[x].x += this.array[x].direction < 0 || this.array[x] > myGameArea.canvas.width)
-						this.removeBullet();
-		
+					//console.log("GOT TO HERE");
+
 					ctx.drawImage(
 					this.array[x].image, 
 					this.array[x].x, 
 					this.array[x].y,
 					2,2
 					);
+				
+					if((this.array[x].x + this.array[x].direction*this.bulletSpeed < 0 )|| (this.array[x].x + this.array[x].direction*this.bulletSpeed > myGameArea.canvas.width))
+						this.removeBullet(x);
+					else	
+						this.array[x].x += this.array[x].direction*this.bulletSpeed;
 				}
 			}		
 		}			
 	}
 }
 
-var bulletObject (x, y, ID, bulletImage, direction) = 
+function bulletObject (x, y, ID, bulletImage, direction) 
 {
 	this.x = x;
 	this.y = y;
@@ -300,13 +326,14 @@ var bulletObject (x, y, ID, bulletImage, direction) =
 	this.image = new Image();	
     this.image.src = bulletImage;
 }
-*/
+
 function updateGameArea() 
 {
     myGameArea.clear();
 	move();	
     myGamePiece.newPos();
     myGamePiece.update();
+	bullets.update();
 }
 
 </script>
