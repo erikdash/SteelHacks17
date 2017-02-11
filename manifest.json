@@ -2,9 +2,9 @@
   "manifest_version": 2,
 
   "name": "GuyThatJumpsAndShoots",
-  "description": "This extension shows a Google Image search result for the current page",
-  "version": "1.0",
-
+  "description": "This extension links to GuyThatJumpsAndShoots",
+  "version": "2.0",
+  
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "main.html",

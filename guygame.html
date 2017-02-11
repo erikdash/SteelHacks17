@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:1px solid #d3d3d3;
+    background-color: #f1f1f1;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var myGamePiece;
+var bullets;
+
+function startGame() 
+{
+    myGamePiece = new player(40, 46, "standR.png", 10, 120);
+	//bullets = new bulletHandler();
+    myGameArea.start();
+}
+
+var myGameArea = 
+{
+    canvas : document.createElement("canvas"),
+    start : function() 
+	{
+        this.canvas.width = 480;
+        this.canvas.height = 270;
+       	this.context = this.canvas.getContext("2d");
+       	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+       	this.frameNo = 0;
+       	this.interval = setInterval(updateGameArea, 20);
+		window.addEventListener('keydown', function (e) 
+		{
+			myGameArea.keys = (myGameArea.keys || []);
+			myGameArea.keys[e.keyCode] = (e.type == "keydown");
+		})
+			
+        window.addEventListener('keyup', function (e) 
+		{
+            myGameArea.keys[e.keyCode] = (e.type == "keydown");            
+        })
+    }, 
+
+    clear : function() 
+	{ 
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	},
+
+    stop : function() 
+	{
+        	clearInterval(this.interval);
+    }
+}
+
+function player(width, height, startImage, x, y) 
+{    	
+	this.image = new Image();	
+    this.image.src = startImage;
+	
+	this.animation = [
+	"standL.png",
+	"run2L.png",
+	"run1L.png",
+	"jump.png",
+	"standR.png",
+	"run2R.png",
+	"run1R.png"
+	];
+    
+	this.state = 0;
+	/*
+		0 = stand
+		1 = run1
+		2 = run2
+		3 = jump
+	*/
+
+	this.onGround = false;
+
+	
+	this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y; 
+	this.gravity = 1;
+	this.maximumVelocity = 8;
+	this.movementSpeed = 3;
+	this.timeReference = new Date();
+	this.elapsedTime = this.timeReference.getTime();
+    this.currentTime = this.timeReference.getTime();
+	this.animationSpeed = 70;
+	this.right = true;
+	
+	this.update = function() 
+	{
+        ctx = myGameArea.context;
+		
+		if(this.onGround)
+		{
+			if(this.speedX != 0) //A really crap way to implement Animation
+			{			
+				if(this.state == 3) //It's a work around.
+				{ 
+					if(this.right)	
+						this.state = 5;
+					else
+						this.state = 1;
+				}
+			
+				this.timeReference = new Date();
+				this.currentTime = this.timeReference.getTime();
+				
+
+				if(this.currentTime - this.elapsedTime > this.animationSpeed)
+				{
+					this.timeReference = new Date();
+					this.elapsedTime = this.timeReference.getTime();
+					switch(this.state)
+					{
+						case 1:
+							this.state = 2;
+							break;
+						
+						case 2:
+							this.state = 1;
+							break;
+							
+						case 5:
+							this.state = 6;
+							break;
+							
+						case 6:
+							this.state = 5;
+							break;
+					}
+				}
+			}
+			else
+			{
+				if(this.right == true)
+						this.state = 4;
+				else
+						this.state = 0;
+			}
+		}
+		else
+			this.state = 3;
+			
+		myGamePiece.image.src = this.animation[this.state];
+			
+	    ctx.drawImage(
+			this.image, 
+	        this.x, 
+	        this.y,
+			this.width, 
+			this.height
+			);
+    }
+
+    this.newPos = function() 
+	{
+		if(this.onGround == false)
+		{
+			if(this.speedY + this.gravity < this.maximumVelocity)
+				this.speedY += this.gravity;
+			else if(this.speedY + this.gravity >= this.maximumVelocity)
+				this.speedY = this.maximumVelocity;
+		}
+		
+        this.x += this.speedX;
+        this.y += this.speedY;
+		this.bottom();
+    }
+
+	this.bottom = function()
+	{
+		//var rockbottom = myGameArea.canvas.height - this.y;
+        if (this.y + this.speedY+this.gravity > 200) 
+		{
+			this.onGround = true;
+			this.speedY = 0;
+         	this.y = 200;
+        }	
+	}
+}
+
+function move()
+{
+    if(myGameArea.keys && (myGameArea.keys[37] || myGameArea.keys[39]))
+	{		
+		if (myGameArea.keys[37])	//Left
+		{
+			myGamePiece.right = false;
+		
+			if(myGamePiece.state == 0 || myGamePiece.state == 4 || myGamePiece.state == 5 || myGamePiece.state == 6)//out of standing or walking right
+				myGamePiece.state = 1;
+			
+			myGamePiece.speedX = myGamePiece.movementSpeed*-1;
+		}
+    	
+		if (myGameArea.keys[39]) 	//Right
+		{	
+			myGamePiece.right = true;
+		
+			if(myGamePiece.state == 4 || myGamePiece.state == 0 || myGamePiece.state == 1 || myGamePiece.state == 2)//out of standing or walking left
+				myGamePiece.state = 5;
+		
+			myGamePiece.speedX = myGamePiece.movementSpeed; 
+		}
+    }
+	else
+		{clearmove();}
+
+	if (myGameArea.keys && myGameArea.keys[38])	//Up 
+	{	
+		if(myGamePiece.onGround == true)
+		{
+			myGamePiece.onGround = false;
+			myGamePiece.speedY = -12;
+		}
+	}
+}
+
+function clearmove() 
+{
+	myGamePiece.speedX = 0;
+}
+
+//----------------------------------------------
+/*
+function bulletHandler()
+{
+	this.array = new Array(3);
+	this.bulletLimit = 3;
+	this.currentBulletCount = 0;
+	this.bulletSpeed = 1;
+	
+	this.addBullet = function(direction)
+	{
+		if(this.currentBulletCount < 3)
+		{
+			for(int x = 0; x < this.bulletLimit; x++)
+			{
+				if(typeof this.array[x] !== 'undefined')
+					this.array[x] = new bulletObject(myGamePiece.x, myGamePiece.y, x, "bullet.png", direction);
+			}
+			
+			this.currentBulletCount++;
+		}
+	}
+
+	this.removeBullet = function(id)
+	{
+		if(this.currentBulletCount > 0)
+		{
+			typeof array[x] = 'undefined';
+			
+			this.currentBulletCount--;
+		}
+	}
+	
+	this.update() = function()
+	{
+		if(this.currentBulletCount > 0)
+		{
+			for(int x = 0; x < this.bulletLimit; x++)
+			{
+				if(typeof this.array[x] !== 'undefined')
+				{
+					this.array[x].x += this.array[x].direction;
+				
+					if(this.array[x].x += this.array[x].direction < 0 || this.array[x] > myGameArea.canvas.width)
+						this.removeBullet();
+		
+					ctx.drawImage(
+					this.array[x].image, 
+					this.array[x].x, 
+					this.array[x].y,
+					2,2
+					);
+				}
+			}		
+		}			
+	}
+}
+
+var bulletObject (x, y, ID, bulletImage, direction) = 
+{
+	this.x = x;
+	this.y = y;
+	this.id = ID; 
+	this.direction = direction;
+
+	this.image = new Image();	
+    this.image.src = bulletImage;
+}
+*/
+function updateGameArea() 
+{
+    myGameArea.clear();
+	move();	
+    myGamePiece.newPos();
+    myGamePiece.update();
+}
+
+</script>
+</body>
+</html>
