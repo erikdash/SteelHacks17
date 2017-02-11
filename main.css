@@ -26,11 +26,13 @@ a:hover {
 
 html,
 body {
+	
   height: 100%;
-  background-color: #333;
+  background-color: #99ffcc;
 }
 body {
-  color: #fff;
+	background-image: url("http://wallpaper-gallery.net/images/game-images/game-images-1.jpg")
+  color: #99ffcc;
   text-align: center;
   text-shadow: 0 1px 3px rgba(0,0,0,.5);
 }
