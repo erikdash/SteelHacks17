@@ -11,13 +11,16 @@ canvas {
 </head>
 <body onload="startGame()">
 <script>
+
 var myGamePiece;
 var bullets;
+var score = 0;
 
 function startGame() 
 {
     myGamePiece = new player(40, 46, "standR.png", 10, 120);
 	bullets = new bulletHandler();
+	enemies = new enemyHandler();
     myGameArea.start();
 }
 
@@ -32,6 +35,7 @@ var myGameArea =
        	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
        	this.frameNo = 0;
        	this.interval = setInterval(updateGameArea, 20);
+		
 		window.addEventListener('keydown', function (e) 
 		{
 			myGameArea.keys = (myGameArea.keys || []);
@@ -104,7 +108,8 @@ function player(width, height, startImage, x, y)
 	this.update = function() 
 	{
         ctx = myGameArea.context;
-		
+		ctx.font = "Bold 20px Courier New";
+
 		if(this.onGround)
 		{
 			if(this.speedX != 0) //A really crap way to implement Animation
@@ -207,8 +212,7 @@ function move()
 			
 			myGamePiece.speedX = myGamePiece.movementSpeed*-1;
 		}
-    	
-		if (myGameArea.keys[39]) 	//Right
+		else if (myGameArea.keys[39]) 	//Right
 		{	
 			myGamePiece.right = true;
 		
@@ -327,6 +331,151 @@ function bulletObject (x, y, ID, bulletImage, direction)
     this.image.src = bulletImage;
 }
 
+//----------------------------------------------
+
+function enemyHandler()
+{
+	this.enemyLimit = 4;
+	this.array = new Array(this.enemyLimit);
+	this.currentEnemyCount = 0;
+	this.enemySpeed = 2;
+	
+	this.animation = [
+	"Enemy_WalkL1.png",
+	"Enemy_WalkL2.png",
+	"Enemy_WalkR1.png",
+	"Enemy_WalkR2.png"
+	];
+	
+	
+	
+	this.addEnemy = function()
+	{
+		var newSpotAdded = false;
+		
+		if(this.currentEnemyCount < this.enemyLimit)
+		{		
+			for(x = 0; x < this.enemyLimit; x++)
+			{
+				if(this.array[x] == null && !newSpotAdded)
+				{
+					console.log("ADDED ENEMY");
+				
+					var randomNum = random(1,2);
+				
+					if(randomNum == 1)
+						this.array[x] = new enemyObject(0, 200, x, this.animation[2], 1);
+					else
+						this.array[x] = new enemyObject(480, 200, x, this.animation[0], -1);
+
+					this.currentEnemyCount++;
+					newSpotAdded = true;
+				}
+			}
+			
+		}
+	}
+	
+	this.removeEnemy = function(id)
+	{
+		if(this.currentEnemyCount > 0)
+		{
+			this.array[id] = null;
+			console.log("REMOVED ENEMY");
+
+			this.currentEnemyCount--;
+		}
+	}
+	
+	this.update = function()	
+	{
+		if(this.currentEnemyCount > 0)
+		{
+			for(x = 0; x < this.enemyLimit; x++)
+			{
+				if(this.array[x] != null)
+				{		
+					this.array[x].timeReference = new Date();
+					this.array[x].currentTime = this.array[x].timeReference.getTime();	
+
+					if(this.array[x].currentTime - this.array[x].elapsedTime > this.array[x].animationSpeed)
+					{
+						this.array[x].timeReference = new Date();
+						this.array[x].elapsedTime = this.array[x].timeReference.getTime();
+						switch(this.array[x].state)
+						{
+							case 0:
+								this.array[x].state = 1;
+								break;
+									
+							case 1:
+								this.array[x].state = 0;
+								break;
+										
+							case 2:
+								this.array[x].state = 3;
+								break;
+										
+							case 3:
+								this.array[x].state = 2;
+								break;
+						}
+					}					
+					
+					this.array[x].image.src = this.animation[this.array[x].state];
+					
+					ctx.drawImage( 	
+									this.array[x].image, 
+									this.array[x].x, 
+									this.array[x].y,
+									42, 46
+								);
+				
+					if((this.array[x].x + this.array[x].direction*this.enemySpeed < 0 )|| (this.array[x].x + this.array[x].direction*this.enemySpeed > myGameArea.canvas.width))
+						this.removeEnemy(x);
+					else	
+						this.array[x].x += this.array[x].direction*this.enemySpeed;
+				}
+			}		
+		}
+
+		var randomNumber = random(1, 200);
+		
+		if(randomNumber == 14)
+			this.addEnemy();
+	}
+}
+
+function enemyObject (x, y, ID, enemyImage, direction) 
+{
+	this.x = x;
+	this.y = y;
+	this.id = ID; 
+	this.direction = direction;
+	
+	
+	//Varaibility
+	this.animationSpeed = random(100, 50);
+	
+	//Start state
+	if(this.direction < 0)
+		this.state = 0;
+	else
+		this.state = 2;
+		
+	this.image = new Image();	
+    this.image.src = enemyImage;
+	this.timeReference = new Date();
+	this.elapsedTime = this.timeReference.getTime();
+    this.currentTime = this.timeReference.getTime();
+	
+}
+
+function random(lowerBound, upperBound)
+{
+	return (Math.floor(Math.random() * upperBound) + lowerBound);
+}
+
 function updateGameArea() 
 {
     myGameArea.clear();
@@ -334,6 +483,11 @@ function updateGameArea()
     myGamePiece.newPos();
     myGamePiece.update();
 	bullets.update();
+	enemies.update();
+	ctx.fillStyle = "black";
+	ctx.fillText("Score: "+score, 10, 18);
+	ctx.fillStyle = "gray";
+    ctx.fillRect(0, 246, 480, 30);
 }
 
 </script>
